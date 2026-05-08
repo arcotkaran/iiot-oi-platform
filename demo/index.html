@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Industrial OI Platform — Karan Arcot</title>
+<meta name="description" content="An end-to-end Industrial Operational Intelligence platform built from scratch. MQTT, Kafka, PostgreSQL, dbt, Airflow, Grafana.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --bg-elev: #FFFFFF;
+    --ink: #1A1F2C;
+    --ink-soft: #424857;
+    --muted: #8B8A85;
+    --line: #DCD8CE;
+    --line-soft: #E8E5DD;
+    --accent: #2D4A3E;
+    --accent-soft: #4A6B5C;
+    --serif: 'Fraunces', 'Times New Roman', serif;
+    --sans: 'Inter Tight', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 400;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--accent); color: var(--bg); }
+
+  /* ===== Layout primitives ===== */
+  .container { max-width: 1240px; margin: 0 auto; padding: 0 40px; }
+  @media (max-width: 768px) { .container { padding: 0 24px; } }
+
+  /* ===== Navigation ===== */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: rgba(247, 245, 240, 0.85);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+    border-bottom: 1px solid transparent;
+    z-index: 100;
+    transition: border-color 0.3s ease;
+  }
+  nav.scrolled { border-bottom-color: var(--line); }
+  nav .container {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 72px;
+  }
+  .nav-brand {
+    font-family: var(--serif);
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .nav-brand span { color: var(--accent); }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    transition: color 0.2s ease;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px;
+    background: var(--ink); color: var(--bg);
+    border-radius: 100px;
+    font-size: 13px;
+    text-decoration: none;
+    transition: background 0.2s ease;
+  }
+  .nav-cta:hover { background: var(--accent); }
+  @media (max-width: 768px) {
+    .nav-links a:not(.nav-cta) { display: none; }
+  }
+
+  /* ===== Hero ===== */
+  .hero {
+    padding: 200px 0 120px;
+    position: relative;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 100px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
+    opacity: 0.08;
+    pointer-events: none;
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 32px;
+  }
+  .eyebrow::before {
+    content: '';
+    display: block;
+    width: 32px; height: 1px;
+    background: var(--accent);
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(48px, 7vw, 96px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin: 0 0 32px;
+    max-width: 900px;
+  }
+  .hero h1 em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--accent);
+  }
+  .hero-lede {
+    font-size: 20px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin: 0 0 48px;
+    font-weight: 300;
+  }
+  .hero-meta {
+    display: flex; gap: 48px;
+    padding-top: 40px;
+    border-top: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .meta-item .meta-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .meta-item .meta-value {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--ink);
+  }
+
+  /* ===== Section primitives ===== */
+  section { padding: 120px 0; position: relative; }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .section-title {
+    font-family: var(--serif);
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 16px 0 24px;
+    max-width: 800px;
+  }
+  .section-lede {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin-bottom: 64px;
+    font-weight: 300;
+  }
+
+  /* ===== Architecture (live pipeline) ===== */
+  .pipeline-wrap {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pipeline-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 40px; padding-bottom: 24px;
+    border-bottom: 1px solid var(--line-soft);
+    flex-wrap: wrap; gap: 12px;
+  }
+  .pipeline-title {
+    font-family: var(--serif);
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .pipeline-status {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.3); }
+  }
+
+  #pipeline-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .pipeline-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line-soft);
+  }
+  @media (max-width: 768px) {
+    .pipeline-stats { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .pipeline-wrap { padding: 24px; }
+  }
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-unit {
+    font-size: 14px;
+    color: var(--muted);
+    font-family: var(--sans);
+    margin-left: 4px;
+  }
+
+  /* ===== Stack section ===== */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  @media (max-width: 768px) {
+    .stack-grid { grid-template-columns: 1fr; }
+  }
+  .stack-item {
+    background: var(--bg-elev);
+    padding: 36px;
+    transition: background 0.3s ease;
+  }
+  .stack-item:hover { background: #FCFAF5; }
+  .stack-row {
+    display: flex; gap: 16px; align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .stack-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    min-width: 32px;
+  }
+  .stack-name {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .stack-role {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-left: 48px;
+  }
+  .stack-desc {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    padding-left: 48px;
+    font-weight: 300;
+  }
+
+  /* ===== Repo structure ===== */
+  .repo-tree {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .repo-header {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 18px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .repo-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+  .repo-link {
+    color: var(--bg);
+    text-decoration: none;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(247, 245, 240, 0.4);
+    padding-bottom: 1px;
+    transition: border-color 0.2s ease;
+  }
+  .repo-link:hover { border-color: var(--bg); }
+  .repo-body { padding: 32px; }
+  .repo-folder {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line-soft);
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  .repo-folder:last-child { border-bottom: 0; }
+  @media (max-width: 768px) {
+    .repo-folder { grid-template-columns: 1fr; gap: 8px; }
+  }
+  .folder-name {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .folder-name::before { content: '└── '; color: var(--muted); }
+  .folder-desc {
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    font-weight: 300;
+  }
+
+  /* ===== Highlights ===== */
+  .highlights {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  @media (max-width: 768px) {
+    .highlights { grid-template-columns: 1fr; }
+  }
+  .highlight {
+    border-top: 1px solid var(--ink);
+    padding-top: 24px;
+  }
+  .highlight-num {
+    font-family: var(--serif);
+    font-size: 48px;
+    font-weight: 300;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+  .highlight-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  .highlight-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    font-weight: 300;
+  }
+
+  /* ===== Footer ===== */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 80px 0 60px;
+    margin-top: 60px;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 64px;
+    margin-bottom: 64px;
+  }
+  @media (max-width: 768px) {
+    .footer-grid { grid-template-columns: 1fr; gap: 40px; }
+  }
+  .footer-brand {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    margin-bottom: 16px;
+  }
+  .footer-tagline {
+    color: var(--ink-soft);
+    font-weight: 300;
+    max-width: 380px;
+    line-height: 1.6;
+  }
+  .footer-col-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .footer-col a {
+    display: block;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 15px;
+    margin-bottom: 12px;
+    transition: color 0.2s ease;
+  }
+  .footer-col a:hover { color: var(--accent); }
+  .footer-bottom {
+    padding-top: 32px;
+    border-top: 1px solid var(--line-soft);
+    display: flex; justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap; gap: 12px;
+  }
+
+  /* ===== Reveal animation ===== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="container">
+    <div class="nav-brand">Industrial OI <span>Platform</span></div>
+    <div class="nav-links">
+      <a href="#architecture">Architecture</a>
+      <a href="#stack">Stack</a>
+      <a href="#repo">Repository</a>
+      <a href="#highlights">Highlights</a>
+      <a href="https://github.com/arcotkaran/iiot-oi-platform" class="nav-cta" target="_blank" rel="noopener">View on GitHub →</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow">A portfolio project · 2026</div>
+    <h1>Building an end-to-end <em>industrial data platform</em> from first principles.</h1>
+    <p class="hero-lede">
+      A complete Operational Intelligence stack — covering edge ingestion, message
+      streaming, warehousing, transformation, orchestration, and visualisation.
+      Designed and implemented across two laptops as a foundation for moving from
+      automation engineering into data engineering.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <div class="meta-label">Author</div>
+        <div class="meta-value">Karan Arcot</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Domain</div>
+        <div class="meta-value">IIoT · Data Engineering</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Stack</div>
+        <div class="meta-value">9 services, fully open-source</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Status</div>
+        <div class="meta-value">Live &amp; running</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<!-- ARCHITECTURE & LIVE PIPELINE -->
+<!-- ============================================================ -->
+<section id="architecture">
+  <div class="container">
+    <div class="section-num reveal">01 — Architecture</div>
+    <h2 class="section-title reveal">A streaming pipeline, end to end.</h2>
+    <p class="section-lede reveal">
+      Telemetry travels from the edge device through six distinct services before
+      reaching the dashboard. Each component is decoupled and independently scalable.
+    </p>
+
+    <div class="pipeline-wrap reveal">
+      <div class="pipeline-header">
+        <div class="pipeline-title">Live data flow</div>
+        <div class="pipeline-status"><span class="live-dot"></span>Simulating</div>
+      </div>
+
+      <svg id="pipeline-svg" viewBox="0 0 1200 280" xmlns="http://www.w3.org/2000/svg" aria-label="Industrial data pipeline visualization">
+        <defs>
+          <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#2D4A3E" stop-opacity="0"/>
+            <stop offset="50%" stop-color="#2D4A3E" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#2D4A3E" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Connection lines -->
+        <g stroke="#DCD8CE" stroke-width="1" fill="none">
+          <line x1="120" y1="140" x2="240" y2="140"/>
+          <line x1="360" y1="140" x2="480" y2="140"/>
+          <line x1="600" y1="140" x2="720" y2="140"/>
+          <line x1="840" y1="140" x2="960" y2="140"/>
+          <line x1="1080" y1="140" x2="1140" y2="140"/>
+        </g>
+
+        <!-- Animated particles will be drawn here -->
+        <g id="particles"></g>
+
+        <!-- Stage: Edge -->
+        <g class="stage" data-stage="edge">
+          <rect x="20" y="80" width="100" height="120" rx="2" fill="#FFFFFF" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="70" y="110" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#8B8A85" letter-spacing="0.1em">EDGE</text>
+          <text x="70" y="142" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#1A1F2C" font-weight="500">Simulator</text>
+          <text x="70" y="160" text-anchor="middle" font-family="Inter Tight" font-size="10" fill="#8B8A85">3 machines</text>
+          <text x="70" y="180" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#2D4A3E">MQTT</text>
+        </g>
+
+        <!-- Stage: Broker -->
+        <g class="stage" data-stage="broker">
+          <rect x="240" y="80" width="120" height="120" rx="2" fill="#FFFFFF" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="300" y="110" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#8B8A85" letter-spacing="0.1em">BROKER</text>
+          <text x="300" y="142" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#1A1F2C" font-weight="500">EMQX</text>
+          <text x="300" y="160" text-anchor="middle" font-family="Inter Tight" font-size="10" fill="#8B8A85">factory/#</text>
+          <text x="300" y="180" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#2D4A3E">:1883</text>
+        </g>
+
+        <!-- Stage: Bridge -->
+        <g class="stage" data-stage="bridge">
+          <rect x="480" y="80" width="120" height="120" rx="2" fill="#FFFFFF" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="540" y="110" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#8B8A85" letter-spacing="0.1em">STREAMING</text>
+          <text x="540" y="142" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#1A1F2C" font-weight="500">Kafka</text>
+          <text x="540" y="160" text-anchor="middle" font-family="Inter Tight" font-size="10" fill="#8B8A85">machine-telemetry</text>
+          <text x="540" y="180" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#2D4A3E">:9092</text>
+        </g>
+
+        <!-- Stage: Storage -->
+        <g class="stage" data-stage="storage">
+          <rect x="720" y="80" width="120" height="120" rx="2" fill="#FFFFFF" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="780" y="110" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#8B8A85" letter-spacing="0.1em">STORAGE</text>
+          <text x="780" y="142" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#1A1F2C" font-weight="500">PostgreSQL</text>
+          <text x="780" y="160" text-anchor="middle" font-family="Inter Tight" font-size="10" fill="#8B8A85">factory_db</text>
+          <text x="780" y="180" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#2D4A3E">:5432</text>
+        </g>
+
+        <!-- Stage: Transform -->
+        <g class="stage" data-stage="transform">
+          <rect x="960" y="80" width="120" height="120" rx="2" fill="#FFFFFF" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="1020" y="110" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#8B8A85" letter-spacing="0.1em">TRANSFORM</text>
+          <text x="1020" y="142" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#1A1F2C" font-weight="500">dbt</text>
+          <text x="1020" y="160" text-anchor="middle" font-family="Inter Tight" font-size="10" fill="#8B8A85">analytics.*</text>
+          <text x="1020" y="180" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#2D4A3E">hourly</text>
+        </g>
+
+        <!-- Stage: Visualize -->
+        <g class="stage" data-stage="viz">
+          <rect x="1140" y="80" width="40" height="120" rx="2" fill="#1A1F2C" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="1160" y="145" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#F7F5F0" font-weight="500" transform="rotate(-90 1160 145)">Grafana</text>
+        </g>
+
+        <!-- Airflow orchestrator (above) -->
+        <g>
+          <rect x="960" y="20" width="120" height="40" rx="2" fill="#FAFAF7" stroke="#8B8A85" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="1020" y="38" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#8B8A85" letter-spacing="0.1em">ORCHESTRATOR</text>
+          <text x="1020" y="52" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#1A1F2C" font-weight="500">Airflow @hourly</text>
+          <line x1="1020" y1="60" x2="1020" y2="80" stroke="#8B8A85" stroke-width="1" stroke-dasharray="3,3"/>
+        </g>
+      </svg>
+
+      <div class="pipeline-stats">
+        <div>
+          <div class="stat-label">Messages</div>
+          <div class="stat-value" id="stat-messages">0</div>
+        </div>
+        <div>
+          <div class="stat-label">Throughput</div>
+          <div class="stat-value" id="stat-throughput">0<span class="stat-unit">/sec</span></div>
+        </div>
+        <div>
+          <div class="stat-label">Last Machine</div>
+          <div class="stat-value" id="stat-machine" style="font-size: 18px;">—</div>
+        </div>
+        <div>
+          <div class="stat-label">Avg Temp</div>
+          <div class="stat-value" id="stat-temp">—<span class="stat-unit">°C</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- TECH STACK -->
+<!-- ============================================================ -->
+<section id="stack">
+  <div class="container">
+    <div class="section-num reveal">02 — Stack</div>
+    <h2 class="section-title reveal">Nine open-source services, deliberately chosen.</h2>
+    <p class="section-lede reveal">
+      Every tool was selected because it appears in real Operational Intelligence
+      job descriptions and production industrial systems — not because it was easy.
+    </p>
+
+    <div class="stack-grid reveal">
+
+      <div class="stack-item">
+        <div class="stack-row">
+          <span class="stack-num">01</span>
+          <span class="stack-name">EMQX</span>
+        </div>
+        <div class="stack-role">Transport · MQTT broker</div>
+        <p class="stack-desc">
+          Receives MQTT telemetry from edge devices on port 1883. The same protocol
+          used in container terminals, cranes, and most industrial IoT environments.
+        </p>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-row">
+          <span class="stack-num">02</span>
+          <span class="stack-name">Apache Kafka</span>
+        </div>
+        <div class="stack-role">Streaming · Distributed log</div>
+        <p class="stack-desc">
+          Buffers and replays messages reliably. Decouples the broker from the
+          database — if storage goes down, no telemetry is lost.
+        </p>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-row">
+          <span class="stack-num">03</span>
+          <span class="stack-name">PostgreSQL</span>
+        </div>
+        <div class="stack-role">Storage · Data warehouse</div>
+        <p class="stack-desc">
+          Stores raw telemetry in the public schema and analytics models in the
+          analytics schema. Industry-standard relational database.
+        </p>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-row">
+          <span class="stack-num">04</span>
+          <span class="stack-name">dbt</span>
+        </div>
+        <div class="stack-role">Transformation · SQL models</div>
+        <p class="stack-desc">
+          Builds a star schema with staging views, dimensions, and fact tables —
+          all version-controlled, tested, and documented in SQL.
+        </p>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-row">
+          <span class="stack-num">05</span>
+          <span class="stack-name">Apache Airflow</span>
+        </div>
+        <div class="stack-role">Orchestration · DAG scheduler</div>
+        <p class="stack-desc">
+          Runs the dbt pipeline every hour automatically. Provides retries,
+          monitoring, and observability for the entire transformation layer.
+        </p>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-row">
+          <span class="stack-num">06</span>
+          <span class="stack-name">Grafana</span>
+        </div>
+        <div class="stack-role">Visualisation · Live dashboards</div>
+        <p class="stack-desc">
+          Connects directly to PostgreSQL. The de facto standard for industrial
+          monitoring — used by manufacturing, infrastructure, and OI teams.
+        </p>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-row">
+          <span class="stack-num">07</span>
+          <span class="stack-name">Supervisor</span>
+        </div>
+        <div class="stack-role">Process control · Service manager</div>
+        <p class="stack-desc">
+          Manages the Python pipeline scripts as background services with
+          automatic restart on failure. Web dashboard for full process control.
+        </p>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-row">
+          <span class="stack-num">08</span>
+          <span class="stack-name">Docker</span>
+        </div>
+        <div class="stack-role">Containerisation · Runtime</div>
+        <p class="stack-desc">
+          All seven backend services run as Docker containers on a shared
+          factory-network bridge — isolated, reproducible, restart-policy enforced.
+        </p>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-row">
+          <span class="stack-num">09</span>
+          <span class="stack-name">Python</span>
+        </div>
+        <div class="stack-role">Glue · Pipeline scripts</div>
+        <p class="stack-desc">
+          Bridges between layers — paho-mqtt for MQTT, kafka-python for streaming,
+          psycopg2 for the database. Where the streaming pipeline lives.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- REPOSITORY STRUCTURE -->
+<!-- ============================================================ -->
+<section id="repo">
+  <div class="container">
+    <div class="section-num reveal">03 — Repository</div>
+    <h2 class="section-title reveal">How the codebase is organised.</h2>
+    <p class="section-lede reveal">
+      The project is structured by responsibility. Every folder contains its own
+      README explaining what's inside, why it exists, and how it integrates with
+      the rest of the system.
+    </p>
+
+    <div class="repo-tree reveal">
+      <div class="repo-header">
+        <div class="repo-name">github.com/arcotkaran/iiot-oi-platform</div>
+        <a href="https://github.com/arcotkaran/iiot-oi-platform" class="repo-link" target="_blank" rel="noopener">Open on GitHub</a>
+      </div>
+      <div class="repo-body">
+
+        <div class="repo-folder">
+          <div class="folder-name">simulator/</div>
+          <div class="folder-desc">Edge device code — Python simulator for three industrial machines (CNC mill, conveyor, hydraulic press) publishing MQTT telemetry every second.</div>
+        </div>
+
+        <div class="repo-folder">
+          <div class="folder-name">pipeline/</div>
+          <div class="folder-desc">The two streaming scripts: <code>mqtt_kafka_bridge.py</code> moves messages from EMQX to Kafka; <code>kafka_to_postgres.py</code> persists them to the database.</div>
+        </div>
+
+        <div class="repo-folder">
+          <div class="folder-name">dbt/</div>
+          <div class="folder-desc">Analytics transformations — staging views, machine dimension table, hourly performance fact table. Schema tests for data quality.</div>
+        </div>
+
+        <div class="repo-folder">
+          <div class="folder-name">airflow/</div>
+          <div class="folder-desc">DAG definitions for orchestration. The <code>factory_dbt_hourly</code> DAG runs <code>dbt run</code> followed by <code>dbt test</code> every hour.</div>
+        </div>
+
+        <div class="repo-folder">
+          <div class="folder-name">infrastructure/</div>
+          <div class="folder-desc">Docker container definitions, Supervisor configurations, network architecture, port forwarding rules, and full startup procedure.</div>
+        </div>
+
+        <div class="repo-folder">
+          <div class="folder-name">grafana/</div>
+          <div class="folder-desc">Exported dashboard JSON containing the four production panels — live temperatures, machine status, hydraulic pressure, and hourly aggregates.</div>
+        </div>
+
+        <div class="repo-folder">
+          <div class="folder-name">docs/</div>
+          <div class="folder-desc">Architecture diagrams, the full project report (PDF), and screenshots of every dashboard in the system.</div>
+        </div>
+
+        <div class="repo-folder">
+          <div class="folder-name">demo/</div>
+          <div class="folder-desc">This site — built as a single-page interactive walkthrough of the project, deployed automatically via GitHub Pages.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- HIGHLIGHTS -->
+<!-- ============================================================ -->
+<section id="highlights">
+  <div class="container">
+    <div class="section-num reveal">04 — Highlights</div>
+    <h2 class="section-title reveal">What this project demonstrates.</h2>
+    <p class="section-lede reveal">
+      Beyond the technology, the project showed that production systems are
+      built through deliberate decisions and patient debugging.
+    </p>
+
+    <div class="highlights">
+      <div class="highlight reveal">
+        <div class="highlight-num">01</div>
+        <div class="highlight-title">End-to-end thinking</div>
+        <p class="highlight-text">
+          Designed and implemented every layer from edge ingestion to live
+          dashboards — including the messy interface points between systems
+          where most data engineering work actually happens.
+        </p>
+      </div>
+
+      <div class="highlight reveal">
+        <div class="highlight-num">02</div>
+        <div class="highlight-title">Production patterns</div>
+        <p class="highlight-text">
+          Decoupled message buffering, automated orchestration, schema testing,
+          process supervision — the same architectural patterns used in
+          industrial systems at scale.
+        </p>
+      </div>
+
+      <div class="highlight reveal">
+        <div class="highlight-num">03</div>
+        <div class="highlight-title">Real debugging</div>
+        <p class="highlight-text">
+          Diagnosed and resolved Kafka dual-listener configuration, WSL2
+          networking quirks, Airflow's SQLite locking issue, and Docker
+          container DNS — the work hiring managers want to see.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- FOOTER -->
+<!-- ============================================================ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">Karan Arcot</div>
+        <p class="footer-tagline">
+          Automation Engineer specialising in Industrial Operational
+          Intelligence and data engineering.
+        </p>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Project</div>
+        <a href="https://github.com/arcotkaran/iiot-oi-platform" target="_blank" rel="noopener">GitHub Repository</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#stack">Tech Stack</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Contact</div>
+        <a href="https://linkedin.com/in/arcotkaran" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://github.com/arcotkaran" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:arcot.karan@gmail.com">arcot.karan@gmail.com</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Karan Arcot. MIT Licensed.</span>
+      <span>Built as a portfolio project.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Nav scroll state
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 20) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  });
+
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // ===== Animated pipeline simulation =====
+  const svg = document.getElementById('pipeline-svg');
+  const particlesG = document.getElementById('particles');
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  // Stage centers (matching the SVG layout)
+  const stages = [
+    { x: 70,  name: 'edge' },
+    { x: 300, name: 'broker' },
+    { x: 540, name: 'streaming' },
+    { x: 780, name: 'storage' },
+    { x: 1020, name: 'transform' },
+    { x: 1160, name: 'viz' }
+  ];
+  const Y = 140;
+
+  const machines = ['cnc_mill', 'conveyor', 'hydraulic_press'];
+  let messageCount = 0;
+  let messagesThisSecond = 0;
+  let throughput = 0;
+  let tempReadings = [];
+
+  function spawnParticle() {
+    const p = document.createElementNS(SVG_NS, 'circle');
+    p.setAttribute('r', 3);
+    p.setAttribute('fill', '#2D4A3E');
+    p.setAttribute('cx', stages[0].x);
+    p.setAttribute('cy', Y);
+    particlesG.appendChild(p);
+
+    let stageIdx = 0;
+    const stepDuration = 800; // ms between stages
+
+    function moveToNextStage() {
+      if (stageIdx >= stages.length - 1) {
+        // Particle complete
+        p.remove();
+        return;
+      }
+      const fromX = stages[stageIdx].x;
+      const toX = stages[stageIdx + 1].x;
+      stageIdx++;
+
+      const startTime = performance.now();
+      function animate(now) {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / stepDuration, 1);
+        // Ease in-out
+        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        const x = fromX + (toX - fromX) * eased;
+        p.setAttribute('cx', x);
+
+        if (t < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          // Pause briefly at stage then continue
+          setTimeout(moveToNextStage, 80);
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    moveToNextStage();
+  }
+
+  function generateMessage() {
+    messageCount++;
+    messagesThisSecond++;
+
+    const machine = machines[Math.floor(Math.random() * machines.length)];
+
+    // Realistic temperatures
+    let temp;
+    if (machine === 'cnc_mill') temp = 65 + Math.random() * 15;
+    else if (machine === 'conveyor') temp = 30 + Math.random() * 12;
+    else temp = 50 + Math.random() * 15;
+
+    tempReadings.push(temp);
+    if (tempReadings.length > 20) tempReadings.shift();
+
+    document.getElementById('stat-messages').textContent = messageCount.toLocaleString();
+    document.getElementById('stat-machine').textContent = machine;
+    const avgTemp = tempReadings.reduce((a, b) => a + b, 0) / tempReadings.length;
+    document.getElementById('stat-temp').innerHTML = avgTemp.toFixed(1) + '<span class="stat-unit">°C</span>';
+
+    spawnParticle();
+  }
+
+  // Update throughput display every second
+  setInterval(() => {
+    throughput = messagesThisSecond;
+    messagesThisSecond = 0;
+    document.getElementById('stat-throughput').innerHTML = throughput + '<span class="stat-unit">/sec</span>';
+  }, 1000);
+
+  // Generate messages — one every ~333ms to simulate 3 machines/sec total
+  setInterval(generateMessage, 333);
+
+  // Generate initial burst
+  generateMessage();
+  setTimeout(generateMessage, 200);
+  setTimeout(generateMessage, 400);
+</script>
+
+</body>
+</html>
