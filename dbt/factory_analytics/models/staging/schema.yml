@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: stg_telemetry
+    description: "Cleaned and standardised machine telemetry"
+    columns:
+      - name: id
+        tests:
+          - unique
+          - not_null
+      - name: machine_id
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['cnc_mill', 'conveyor', 'hydraulic_press']
+
+  - name: dim_machines
+    description: "One row per machine with metadata"
+    columns:
+      - name: machine_id
+        tests:
+          - unique
+          - not_null
