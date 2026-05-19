@@ -44,7 +44,7 @@
 
   /* ===== Layout primitives ===== */
   .container { max-width: 1240px; margin: 0 auto; padding: 0 40px; }
-  @media (max-width: 768px) { .container { padding: 0 24px; } }
+  @media (max-width: 768px) { .container { padding: 0 12px; } }
 
   /* ===== Navigation ===== */
   nav {
@@ -269,6 +269,50 @@
     color: var(--muted);
     font-family: var(--sans);
     margin-left: 4px;
+  }
+
+  /* Mobile pipeline — hidden on desktop, shown on mobile */
+  .pipeline-mobile { display: none; }
+  .pm-stage {
+    width: 100%; max-width: 220px;
+    background: var(--bg-elev);
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+  .pm-stage--filled { background: var(--ink); }
+  .pm-stage--filled .pm-layer { color: rgba(247, 245, 240, 0.5); }
+  .pm-stage--filled .pm-name { color: var(--bg); }
+  .pm-layer {
+    font-family: var(--mono);
+    font-size: 9px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .pm-name {
+    font-family: var(--serif);
+    font-size: 15px; font-weight: 500;
+    color: var(--ink); margin-bottom: 2px;
+  }
+  .pm-detail { font-family: var(--mono); font-size: 9px; color: var(--accent); }
+  .pm-badge {
+    display: inline-block; margin-top: 6px;
+    padding: 2px 8px;
+    border: 1px dashed var(--muted); border-radius: 100px;
+    font-family: var(--mono); font-size: 9px; color: var(--muted);
+  }
+  .pm-arrow {
+    width: 1px; height: 20px;
+    background: var(--line); position: relative;
+  }
+  .pm-arrow::after {
+    content: '';
+    position: absolute; bottom: 1px; left: 50%;
+    width: 6px; height: 6px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    transform: translateX(-50%) rotate(45deg);
   }
 
   /* ===== Stack section ===== */
@@ -597,14 +641,15 @@
     .section-title { margin: 8px 0 12px; }
     .section-lede { margin-bottom: 32px; }
 
-    /* Pipeline SVG — scrollable at legible size */
-    .svg-scroll-wrap {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      margin: 0 -24px;
-      padding: 0 24px;
+    /* Pipeline — hide SVG, show vertical mobile version */
+    .svg-scroll-wrap { display: none; }
+    .pipeline-mobile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      margin: 0 auto;
     }
-    #pipeline-svg { width: 650px; min-width: 650px; }
 
     /* Stack — compact 2-col, no desktop indent */
     .stack-item { padding: 18px; }
@@ -661,7 +706,7 @@
 <header class="hero">
   <div class="container">
     <div class="eyebrow">A portfolio project · 2026</div>
-    <h1>Building an end-to-end <em>industrial data platform</em> from first principles.</h1>
+    <h1><em>Automation Operational Intelligence</em>, built end-to-end.</h1>
     <p class="hero-lede">
       A complete Operational Intelligence stack — edge ingestion, message
       streaming, warehousing, transformation, orchestration, and live dashboards.
@@ -791,6 +836,46 @@
       </svg>
       </div>
 
+      <!-- Mobile vertical pipeline (hidden on desktop) -->
+      <div class="pipeline-mobile">
+        <div class="pm-stage pm-stage--filled">
+          <div class="pm-layer">Edge</div>
+          <div class="pm-name">Simulator</div>
+          <div class="pm-detail">3 machines · MQTT</div>
+        </div>
+        <div class="pm-arrow"></div>
+        <div class="pm-stage">
+          <div class="pm-layer">Broker</div>
+          <div class="pm-name">EMQX</div>
+          <div class="pm-detail">factory/# · :1883</div>
+        </div>
+        <div class="pm-arrow"></div>
+        <div class="pm-stage">
+          <div class="pm-layer">Streaming</div>
+          <div class="pm-name">Kafka</div>
+          <div class="pm-detail">machine-telemetry · :9092</div>
+        </div>
+        <div class="pm-arrow"></div>
+        <div class="pm-stage">
+          <div class="pm-layer">Storage</div>
+          <div class="pm-name">PostgreSQL</div>
+          <div class="pm-detail">factory_db · :5432</div>
+        </div>
+        <div class="pm-arrow"></div>
+        <div class="pm-stage">
+          <div class="pm-layer">Transform</div>
+          <div class="pm-name">dbt</div>
+          <div class="pm-detail">analytics.* · hourly</div>
+          <div class="pm-badge">Airflow @hourly</div>
+        </div>
+        <div class="pm-arrow"></div>
+        <div class="pm-stage pm-stage--filled">
+          <div class="pm-layer">Visualise</div>
+          <div class="pm-name">Grafana</div>
+          <div class="pm-detail">4 live panels</div>
+        </div>
+      </div>
+
       <div class="pipeline-stats">
         <div>
           <div class="stat-label">Messages</div>
@@ -822,7 +907,7 @@
     <h2 class="section-title reveal">Nine open-source services, deliberately chosen.</h2>
     <p class="section-lede reveal">
       Every tool was selected because it appears in real Operational Intelligence
-      job descriptions and production industrial systems — not because it was easy.
+      job descriptions and production industrial systems.
     </p>
 
     <div class="stack-grid reveal">
