@@ -282,7 +282,7 @@
     overflow: hidden;
   }
   @media (max-width: 768px) {
-    .stack-grid { grid-template-columns: 1fr; }
+    .stack-grid { grid-template-columns: repeat(2, 1fr); }
   }
   .stack-item {
     background: var(--bg-elev);
@@ -543,7 +543,7 @@
     margin-bottom: 64px;
   }
   @media (max-width: 768px) {
-    .footer-grid { grid-template-columns: 1fr; gap: 40px; }
+    .footer-grid { grid-template-columns: 1fr; gap: 20px; }
   }
   .footer-brand {
     font-family: var(--serif);
@@ -583,6 +583,51 @@
     font-size: 12px;
     color: var(--muted);
     flex-wrap: wrap; gap: 12px;
+  }
+
+  /* ===== Mobile layout tightening ===== */
+  @media (max-width: 768px) {
+    /* Hero */
+    .hero { padding: 100px 0 60px; }
+    .hero-lede { font-size: 17px; }
+    .hero-meta { gap: 20px; }
+
+    /* Section rhythm */
+    section { padding: 60px 0; }
+    .section-title { margin: 8px 0 12px; }
+    .section-lede { margin-bottom: 32px; }
+
+    /* Pipeline SVG — scrollable at legible size */
+    .svg-scroll-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -24px;
+      padding: 0 24px;
+    }
+    #pipeline-svg { width: 650px; min-width: 650px; }
+
+    /* Stack — compact 2-col, no desktop indent */
+    .stack-item { padding: 18px; }
+    .stack-name { font-size: 17px; }
+    .stack-role { padding-left: 0; font-size: 10px; margin-bottom: 10px; }
+    .stack-desc { padding-left: 0; font-size: 13px; }
+
+    /* Repository */
+    .repo-body { padding: 16px; }
+    .repo-folder { padding: 10px 0; }
+
+    /* Dashboard */
+    .dashboard-intro { margin-bottom: 20px; }
+    .panel-body { padding: 12px 16px; }
+    .panel-sql { padding: 10px; }
+    .panel-sql code { font-size: 10px; }
+
+    /* Highlights */
+    .highlight-num { font-size: 32px; margin-bottom: 8px; }
+
+    /* Footer */
+    footer { padding: 40px 0 28px; margin-top: 24px; }
+    .footer-grid { margin-bottom: 32px; }
   }
 
   /* ===== Reveal animation ===== */
@@ -663,6 +708,7 @@
         <div class="pipeline-status"><span class="live-dot"></span>Simulating</div>
       </div>
 
+      <div class="svg-scroll-wrap">
       <svg id="pipeline-svg" viewBox="0 0 1200 280" xmlns="http://www.w3.org/2000/svg" aria-label="Industrial data pipeline visualization">
         <defs>
           <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -743,6 +789,7 @@
           <line x1="1020" y1="60" x2="1020" y2="80" stroke="#8B8A85" stroke-width="1" stroke-dasharray="3,3"/>
         </g>
       </svg>
+      </div>
 
       <div class="pipeline-stats">
         <div>
