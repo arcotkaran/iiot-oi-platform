@@ -303,7 +303,7 @@
           "table": "machine_telemetry"
         }
       ],
-      "title": "Hourly Average Temperature (dbt)",
+      "title": "Live Machine Status",
       "type": "table"
     },
     {
@@ -567,5 +567,5 @@
   "timezone": "browser",
   "title": "Factory OI Dashboard",
   "uid": "adkpn7r",
-  "version": 8
+  "version": 9
 }
