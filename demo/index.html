@@ -271,49 +271,8 @@
     margin-left: 4px;
   }
 
-  /* Mobile pipeline — hidden on desktop, shown on mobile */
-  .pipeline-mobile { display: none; }
-  .pm-stage {
-    width: 100%; max-width: 220px;
-    background: var(--bg-elev);
-    border: 1px solid var(--ink);
-    border-radius: 2px;
-    padding: 10px 14px;
-    text-align: center;
-  }
-  .pm-stage--filled { background: var(--ink); }
-  .pm-stage--filled .pm-layer { color: rgba(247, 245, 240, 0.5); }
-  .pm-stage--filled .pm-name { color: var(--bg); }
-  .pm-layer {
-    font-family: var(--mono);
-    font-size: 9px; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--muted);
-    margin-bottom: 2px;
-  }
-  .pm-name {
-    font-family: var(--serif);
-    font-size: 15px; font-weight: 500;
-    color: var(--ink); margin-bottom: 2px;
-  }
-  .pm-detail { font-family: var(--mono); font-size: 9px; color: var(--accent); }
-  .pm-badge {
-    display: inline-block; margin-top: 6px;
-    padding: 2px 8px;
-    border: 1px dashed var(--muted); border-radius: 100px;
-    font-family: var(--mono); font-size: 9px; color: var(--muted);
-  }
-  .pm-arrow {
-    width: 1px; height: 20px;
-    background: var(--line); position: relative;
-  }
-  .pm-arrow::after {
-    content: '';
-    position: absolute; bottom: 1px; left: 50%;
-    width: 6px; height: 6px;
-    border-right: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    transform: translateX(-50%) rotate(45deg);
-  }
+  /* Mobile pipeline SVG — hidden on desktop, shown on mobile */
+  #pipeline-svg-mobile { width: 100%; height: auto; display: none; }
 
   /* ===== Stack section ===== */
   .stack-grid {
@@ -645,15 +604,9 @@
     .section-title { margin: 8px 0 12px; }
     .section-lede { margin-bottom: 32px; }
 
-    /* Pipeline — hide SVG, show vertical mobile version */
-    .svg-scroll-wrap { display: none; }
-    .pipeline-mobile {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
-      margin: 0 auto;
-    }
+    /* Pipeline — swap to vertical animated SVG on mobile */
+    #pipeline-svg { display: none; }
+    #pipeline-svg-mobile { display: block; }
 
     /* Stack — compact 2-col, no desktop indent */
     .stack-item { padding: 18px; }
@@ -757,7 +710,6 @@
         <div class="pipeline-status"><span class="live-dot"></span>Simulating</div>
       </div>
 
-      <div class="svg-scroll-wrap">
       <svg id="pipeline-svg" viewBox="0 0 1200 280" xmlns="http://www.w3.org/2000/svg" aria-label="Industrial data pipeline visualization">
         <defs>
           <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -838,47 +790,71 @@
           <line x1="1020" y1="60" x2="1020" y2="80" stroke="#8B8A85" stroke-width="1" stroke-dasharray="3,3"/>
         </g>
       </svg>
-      </div>
 
-      <!-- Mobile vertical pipeline (hidden on desktop) -->
-      <div class="pipeline-mobile">
-        <div class="pm-stage pm-stage--filled">
-          <div class="pm-layer">Edge</div>
-          <div class="pm-name">Simulator</div>
-          <div class="pm-detail">3 machines · MQTT</div>
-        </div>
-        <div class="pm-arrow"></div>
-        <div class="pm-stage">
-          <div class="pm-layer">Broker</div>
-          <div class="pm-name">EMQX</div>
-          <div class="pm-detail">factory/# · :1883</div>
-        </div>
-        <div class="pm-arrow"></div>
-        <div class="pm-stage">
-          <div class="pm-layer">Streaming</div>
-          <div class="pm-name">Kafka</div>
-          <div class="pm-detail">machine-telemetry · :9092</div>
-        </div>
-        <div class="pm-arrow"></div>
-        <div class="pm-stage">
-          <div class="pm-layer">Storage</div>
-          <div class="pm-name">PostgreSQL</div>
-          <div class="pm-detail">factory_db · :5432</div>
-        </div>
-        <div class="pm-arrow"></div>
-        <div class="pm-stage">
-          <div class="pm-layer">Transform</div>
-          <div class="pm-name">dbt</div>
-          <div class="pm-detail">analytics.* · hourly</div>
-          <div class="pm-badge">Airflow @hourly</div>
-        </div>
-        <div class="pm-arrow"></div>
-        <div class="pm-stage pm-stage--filled">
-          <div class="pm-layer">Visualise</div>
-          <div class="pm-name">Grafana</div>
-          <div class="pm-detail">4 live panels</div>
-        </div>
-      </div>
+      <!-- Mobile vertical animated pipeline (hidden on desktop) -->
+      <svg id="pipeline-svg-mobile" viewBox="0 0 280 580" xmlns="http://www.w3.org/2000/svg" aria-label="Industrial data pipeline — vertical view">
+        <!-- Vertical connection lines at x=140 -->
+        <g stroke="#DCD8CE" stroke-width="1" fill="none">
+          <line x1="140" y1="74"  x2="140" y2="104"/>
+          <line x1="140" y1="170" x2="140" y2="200"/>
+          <line x1="140" y1="266" x2="140" y2="296"/>
+          <line x1="140" y1="362" x2="140" y2="392"/>
+          <line x1="140" y1="478" x2="140" y2="508"/>
+        </g>
+
+        <!-- Animated particles (vertical) -->
+        <g id="particles-mobile"></g>
+
+        <!-- Stage 0: Simulator -->
+        <g>
+          <rect x="20" y="8" width="240" height="66" rx="2" fill="#FFFFFF" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="140" y="27"  text-anchor="middle" font-family="JetBrains Mono" font-size="9"  fill="#8B8A85" letter-spacing="0.12em">EDGE</text>
+          <text x="140" y="46"  text-anchor="middle" font-family="Fraunces"       font-size="15" fill="#1A1F2C" font-weight="500">Simulator</text>
+          <text x="140" y="62"  text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#2D4A3E">3 machines · MQTT</text>
+        </g>
+
+        <!-- Stage 1: EMQX -->
+        <g>
+          <rect x="20" y="104" width="240" height="66" rx="2" fill="#FFFFFF" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="140" y="123" text-anchor="middle" font-family="JetBrains Mono" font-size="9"  fill="#8B8A85" letter-spacing="0.12em">BROKER</text>
+          <text x="140" y="142" text-anchor="middle" font-family="Fraunces"       font-size="15" fill="#1A1F2C" font-weight="500">EMQX</text>
+          <text x="140" y="158" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#2D4A3E">factory/# · :1883</text>
+        </g>
+
+        <!-- Stage 2: Kafka -->
+        <g>
+          <rect x="20" y="200" width="240" height="66" rx="2" fill="#FFFFFF" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="140" y="219" text-anchor="middle" font-family="JetBrains Mono" font-size="9"  fill="#8B8A85" letter-spacing="0.12em">STREAMING</text>
+          <text x="140" y="238" text-anchor="middle" font-family="Fraunces"       font-size="15" fill="#1A1F2C" font-weight="500">Kafka</text>
+          <text x="140" y="254" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#2D4A3E">machine-telemetry · :9092</text>
+        </g>
+
+        <!-- Stage 3: PostgreSQL -->
+        <g>
+          <rect x="20" y="296" width="240" height="66" rx="2" fill="#FFFFFF" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="140" y="315" text-anchor="middle" font-family="JetBrains Mono" font-size="9"  fill="#8B8A85" letter-spacing="0.12em">STORAGE</text>
+          <text x="140" y="334" text-anchor="middle" font-family="Fraunces"       font-size="15" fill="#1A1F2C" font-weight="500">PostgreSQL</text>
+          <text x="140" y="350" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#2D4A3E">factory_db · :5432</text>
+        </g>
+
+        <!-- Stage 4: dbt (taller to fit Airflow pill) -->
+        <g>
+          <rect x="20" y="392" width="240" height="86" rx="2" fill="#FFFFFF" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="140" y="411" text-anchor="middle" font-family="JetBrains Mono" font-size="9"  fill="#8B8A85" letter-spacing="0.12em">TRANSFORM</text>
+          <text x="140" y="430" text-anchor="middle" font-family="Fraunces"       font-size="15" fill="#1A1F2C" font-weight="500">dbt</text>
+          <text x="140" y="446" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#2D4A3E">analytics.* · hourly</text>
+          <rect x="82" y="455" width="116" height="18" rx="9" fill="none" stroke="#8B8A85" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="140" y="468" text-anchor="middle" font-family="JetBrains Mono" font-size="9"  fill="#8B8A85" letter-spacing="0.08em">Airflow @hourly</text>
+        </g>
+
+        <!-- Stage 5: Grafana (filled dark) -->
+        <g>
+          <rect x="20" y="508" width="240" height="66" rx="2" fill="#1A1F2C" stroke="#1A1F2C" stroke-width="1"/>
+          <text x="140" y="527" text-anchor="middle" font-family="JetBrains Mono" font-size="9"  fill="rgba(247,245,240,0.5)" letter-spacing="0.12em">VISUALISE</text>
+          <text x="140" y="546" text-anchor="middle" font-family="Fraunces"       font-size="15" fill="#F7F5F0"               font-weight="500">Grafana</text>
+          <text x="140" y="562" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="rgba(247,245,240,0.55)">4 live panels · :3000</text>
+        </g>
+      </svg>
 
       <div class="pipeline-stats">
         <div>
@@ -1335,20 +1311,32 @@
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
   // ===== Animated pipeline simulation =====
-  const svg = document.getElementById('pipeline-svg');
-  const particlesG = document.getElementById('particles');
+  const particlesG  = document.getElementById('particles');
+  const particlesMG = document.getElementById('particles-mobile');
   const SVG_NS = 'http://www.w3.org/2000/svg';
+  const mobileMQ = window.matchMedia('(max-width: 768px)');
 
-  // Stage centers (matching the SVG layout)
+  // Desktop stage centres (horizontal, y fixed at 140)
   const stages = [
-    { x: 70,  name: 'edge' },
-    { x: 300, name: 'broker' },
-    { x: 540, name: 'streaming' },
-    { x: 780, name: 'storage' },
-    { x: 1020, name: 'transform' },
-    { x: 1160, name: 'viz' }
+    { x: 70  },
+    { x: 300 },
+    { x: 540 },
+    { x: 780 },
+    { x: 1020 },
+    { x: 1160 }
   ];
   const Y = 140;
+
+  // Mobile stage centres (vertical, x fixed at 140)
+  const stagesM = [
+    { y: 41  },
+    { y: 137 },
+    { y: 233 },
+    { y: 329 },
+    { y: 435 },
+    { y: 541 }
+  ];
+  const MX = 140;
 
   const machines = ['cnc_mill', 'conveyor', 'hydraulic_press'];
   let messageCount = 0;
@@ -1357,39 +1345,38 @@
   let tempReadings = [];
 
   function spawnParticle() {
+    const isMobile = mobileMQ.matches;
+    const target = isMobile ? particlesMG : particlesG;
+
     const p = document.createElementNS(SVG_NS, 'circle');
     p.setAttribute('r', 3);
     p.setAttribute('fill', '#2D4A3E');
-    p.setAttribute('cx', stages[0].x);
-    p.setAttribute('cy', Y);
-    particlesG.appendChild(p);
+    p.setAttribute('cx', isMobile ? MX : stages[0].x);
+    p.setAttribute('cy', isMobile ? stagesM[0].y : Y);
+    target.appendChild(p);
 
     let stageIdx = 0;
-    const stepDuration = 800; // ms between stages
+    const stepDuration = 800;
 
     function moveToNextStage() {
       if (stageIdx >= stages.length - 1) {
-        // Particle complete
         p.remove();
         return;
       }
-      const fromX = stages[stageIdx].x;
-      const toX = stages[stageIdx + 1].x;
+      const from = isMobile ? stagesM[stageIdx].y     : stages[stageIdx].x;
+      const to   = isMobile ? stagesM[stageIdx + 1].y : stages[stageIdx + 1].x;
       stageIdx++;
 
       const startTime = performance.now();
       function animate(now) {
         const elapsed = now - startTime;
         const t = Math.min(elapsed / stepDuration, 1);
-        // Ease in-out
         const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-        const x = fromX + (toX - fromX) * eased;
-        p.setAttribute('cx', x);
-
+        const val = from + (to - from) * eased;
+        p.setAttribute(isMobile ? 'cy' : 'cx', val);
         if (t < 1) {
           requestAnimationFrame(animate);
         } else {
-          // Pause briefly at stage then continue
           setTimeout(moveToNextStage, 80);
         }
       }
