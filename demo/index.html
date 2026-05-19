@@ -402,6 +402,30 @@
     white-space: nowrap;
   }
   .dashboard-download:hover { border-color: var(--accent); color: var(--accent); }
+  /* ===== Dashboard screenshot ===== */
+  .dashboard-screenshot {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .screenshot-label {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--line-soft);
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .dashboard-screenshot img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
   .panel-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -951,6 +975,16 @@
          target="_blank" rel="noopener" class="dashboard-download">
         ↓ Download dashboard JSON
       </a>
+    </div>
+
+    <div class="dashboard-screenshot reveal">
+      <div class="screenshot-label">
+        <span class="live-dot"></span>
+        Factory OI Dashboard — live telemetry · 2026-05-19
+      </div>
+      <img src="assets/grafana_dashboard.png"
+           alt="Grafana Factory OI Dashboard showing Machine Temperatures, Live Machine Status, Hydraulic Press Pressure, and Hourly Average Temperature panels"
+           loading="lazy">
     </div>
 
     <div class="panel-grid reveal">
