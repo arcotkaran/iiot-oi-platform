@@ -27,7 +27,7 @@
   }
 
   *, *::before, *::after { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; overflow-x: hidden; }
 
   body {
     margin: 0;
@@ -631,8 +631,12 @@
 
   /* ===== Mobile layout tightening ===== */
   @media (max-width: 768px) {
+    /* Nav */
+    .nav-brand { font-size: 15px; }
+
     /* Hero */
     .hero { padding: 100px 0 60px; }
+    .hero h1 { font-size: 34px; }
     .hero-lede { font-size: 17px; }
     .hero-meta { gap: 20px; }
 
