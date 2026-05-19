@@ -29,6 +29,9 @@ PostgreSQL datasource configured in Grafana:
 
 ## Dashboard export
 
-The dashboard JSON export belongs here — useful for restoring the dashboard
-on a fresh Grafana instance without manually recreating panels. Export from
-Grafana → Dashboard settings → JSON model, then save as `factory_oi_dashboard.json`.
+`factory_oi_dashboard.json` — the complete exportable dashboard definition.
+Import it into any Grafana instance via Dashboards → Import → Upload JSON file,
+then point the datasource at a PostgreSQL database with the `factory_db` schema.
+
+The `id` field is intentionally omitted from the export so it doesn't conflict
+with existing dashboards on the target instance.

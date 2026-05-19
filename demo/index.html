@@ -382,6 +382,94 @@
     font-weight: 300;
   }
 
+  /* ===== Dashboard panels ===== */
+  .dashboard-intro {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-bottom: 48px; flex-wrap: wrap; gap: 24px;
+  }
+  .dashboard-download {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 22px;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    white-space: nowrap;
+  }
+  .dashboard-download:hover { border-color: var(--accent); color: var(--accent); }
+  .panel-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 768px) { .panel-grid { grid-template-columns: 1fr; } }
+  .panel-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    flex-wrap: wrap;
+  }
+  .panel-title-row { display: flex; align-items: baseline; gap: 12px; }
+  .panel-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .panel-title {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .panel-type {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 100px;
+    padding: 2px 10px;
+    white-space: nowrap;
+  }
+  .panel-body { padding: 20px 24px; }
+  .panel-desc {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    font-weight: 300;
+    margin-bottom: 16px;
+  }
+  .panel-sql {
+    background: var(--bg);
+    border: 1px solid var(--line-soft);
+    border-radius: 2px;
+    padding: 16px;
+    overflow-x: auto;
+  }
+  .panel-sql code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--ink);
+    white-space: pre;
+    display: block;
+  }
+  .sql-kw { color: var(--accent); font-weight: 500; }
+  .sql-schema { color: var(--ink-soft); }
+
   /* ===== Highlights ===== */
   .highlights {
     display: grid;
@@ -494,6 +582,7 @@
       <a href="#architecture">Architecture</a>
       <a href="#stack">Stack</a>
       <a href="#repo">Repository</a>
+      <a href="#dashboard">Dashboard</a>
       <a href="#highlights">Highlights</a>
       <a href="https://github.com/arcotkaran/iiot-oi-platform" class="nav-cta" target="_blank" rel="noopener">View on GitHub →</a>
     </div>
@@ -845,11 +934,144 @@
 </section>
 
 <!-- ============================================================ -->
+<!-- DASHBOARD -->
+<!-- ============================================================ -->
+<section id="dashboard">
+  <div class="container">
+    <div class="section-num reveal">04 — Dashboard</div>
+    <h2 class="section-title reveal">Four panels, two data layers.</h2>
+    <div class="dashboard-intro reveal">
+      <p class="section-lede" style="margin-bottom:0">
+        Two panels query raw telemetry direct from PostgreSQL for real-time
+        visibility. Two query the <code style="font-family:var(--mono);font-size:0.9em">analytics</code>
+        schema built by dbt for trend analysis. The JSON export below
+        imports the complete dashboard into any Grafana instance.
+      </p>
+      <a href="https://github.com/arcotkaran/iiot-oi-platform/blob/main/grafana/factory_oi_dashboard.json"
+         target="_blank" rel="noopener" class="dashboard-download">
+        ↓ Download dashboard JSON
+      </a>
+    </div>
+
+    <div class="panel-grid reveal">
+
+      <!-- Panel 1 -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title-row">
+            <span class="panel-num">01</span>
+            <span class="panel-title">Machine Temperatures</span>
+          </div>
+          <span class="panel-type">Time series</span>
+        </div>
+        <div class="panel-body">
+          <p class="panel-desc">
+            Live temperature for all three machines over the last 30 minutes.
+            Uses <code style="font-family:var(--mono);font-size:0.9em">COALESCE(temperature_c, oil_temp_c)</code>
+            to handle the hydraulic press reporting oil temperature under a
+            different field name.
+          </p>
+          <div class="panel-sql"><code><span class="sql-kw">SELECT</span>
+  received_at          <span class="sql-kw">AS</span> time,
+  <span class="sql-kw">COALESCE</span>(temperature_c, oil_temp_c) <span class="sql-kw">AS</span> value,
+  machine_id           <span class="sql-kw">AS</span> metric
+<span class="sql-kw">FROM</span> <span class="sql-schema">public</span>.machine_telemetry
+<span class="sql-kw">WHERE</span> received_at > <span class="sql-kw">NOW</span>() - <span class="sql-kw">INTERVAL</span> <span class="sql-kw">'30 minutes'</span>
+<span class="sql-kw">ORDER BY</span> received_at <span class="sql-kw">ASC</span></code></div>
+        </div>
+      </div>
+
+      <!-- Panel 2 -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title-row">
+            <span class="panel-num">02</span>
+            <span class="panel-title">Live Machine Status</span>
+          </div>
+          <span class="panel-type">Table</span>
+        </div>
+        <div class="panel-body">
+          <p class="panel-desc">
+            Latest reading per machine in the last 5 minutes — status, fault
+            flag, and current temperature. Shows operational state at a
+            glance, including fault conditions from the simulator.
+          </p>
+          <div class="panel-sql"><code><span class="sql-kw">SELECT</span>
+  machine_id,
+  status,
+  fault,
+  <span class="sql-kw">ROUND</span>(<span class="sql-kw">COALESCE</span>(temperature_c,
+        oil_temp_c)::<span class="sql-kw">numeric</span>, 1) <span class="sql-kw">AS</span> temperature,
+  received_at
+<span class="sql-kw">FROM</span> <span class="sql-schema">public</span>.machine_telemetry
+<span class="sql-kw">WHERE</span> received_at > <span class="sql-kw">NOW</span>() - <span class="sql-kw">INTERVAL</span> <span class="sql-kw">'5 minutes'</span>
+<span class="sql-kw">ORDER BY</span> received_at <span class="sql-kw">DESC</span>
+<span class="sql-kw">LIMIT</span> 3</code></div>
+        </div>
+      </div>
+
+      <!-- Panel 3 -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title-row">
+            <span class="panel-num">03</span>
+            <span class="panel-title">Hydraulic Press Pressure</span>
+          </div>
+          <span class="panel-type">Time series</span>
+        </div>
+        <div class="panel-body">
+          <p class="panel-desc">
+            Pressure trend for the hydraulic press over the last 30 minutes.
+            Filtered to a single machine so the y-axis stays meaningful —
+            pressure in bar has a different scale to temperature.
+          </p>
+          <div class="panel-sql"><code><span class="sql-kw">SELECT</span>
+  received_at  <span class="sql-kw">AS</span> time,
+  pressure_bar <span class="sql-kw">AS</span> value,
+  machine_id   <span class="sql-kw">AS</span> metric
+<span class="sql-kw">FROM</span> <span class="sql-schema">public</span>.machine_telemetry
+<span class="sql-kw">WHERE</span> received_at > <span class="sql-kw">NOW</span>() - <span class="sql-kw">INTERVAL</span> <span class="sql-kw">'30 minutes'</span>
+  <span class="sql-kw">AND</span> machine_id = <span class="sql-kw">'hydraulic_press'</span>
+<span class="sql-kw">ORDER BY</span> received_at <span class="sql-kw">ASC</span></code></div>
+        </div>
+      </div>
+
+      <!-- Panel 4 -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title-row">
+            <span class="panel-num">04</span>
+            <span class="panel-title">Hourly Avg Temperature</span>
+          </div>
+          <span class="panel-type">Time series · dbt</span>
+        </div>
+        <div class="panel-body">
+          <p class="panel-desc">
+            24-hour temperature trend per machine, sourced from the
+            <code style="font-family:var(--mono);font-size:0.9em">analytics.fct_hourly_performance</code>
+            fact table built by dbt. This is the only panel querying the
+            transformation layer — Airflow refreshes it every hour.
+          </p>
+          <div class="panel-sql"><code><span class="sql-kw">SELECT</span>
+  hour_bucket  <span class="sql-kw">AS</span> time,
+  avg_temp_c   <span class="sql-kw">AS</span> value,
+  machine_id   <span class="sql-kw">AS</span> metric
+<span class="sql-kw">FROM</span> <span class="sql-schema">analytics</span>.fct_hourly_performance
+<span class="sql-kw">WHERE</span> hour_bucket > <span class="sql-kw">NOW</span>() - <span class="sql-kw">INTERVAL</span> <span class="sql-kw">'24 hours'</span>
+<span class="sql-kw">ORDER BY</span> hour_bucket <span class="sql-kw">ASC</span></code></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
 <!-- HIGHLIGHTS -->
 <!-- ============================================================ -->
 <section id="highlights">
   <div class="container">
-    <div class="section-num reveal">04 — Highlights</div>
+    <div class="section-num reveal">05 — Highlights</div>
     <h2 class="section-title reveal">What this project demonstrates.</h2>
     <p class="section-lede reveal">
       Beyond the technology, the project showed that production systems are
