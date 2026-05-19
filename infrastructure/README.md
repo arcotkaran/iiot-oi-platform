@@ -1,8 +1,10 @@
-# Infrastructure
+# infrastructure — Platform Setup
 
-The platform runs on Docker containers (managed via Docker's `--restart always`)
-and Python processes (managed via Supervisor) across two laptops on the same
-home network.
+The platform runs across two laptops on the same home network — one acting as
+the edge device, one as the data centre. All backend services run in Docker
+containers (with `--restart always` for auto-recovery) and the Python pipeline
+scripts run under Supervisor. This document is the reference for how the
+system is wired together and how to bring it back up after a restart.
 
 ## Hardware
 

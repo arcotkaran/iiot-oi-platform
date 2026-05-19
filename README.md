@@ -1,82 +1,130 @@
 # Industrial OI Platform — End-to-End IIoT Data Pipeline
 
 A complete Industrial Operational Intelligence platform built from scratch,
-covering the full data journey from edge sensors to live dashboards.
+demonstrating the full data journey from edge sensor to live dashboard.
 
-> Built by an automation engineer to bridge the gap between industrial systems
-> and modern data engineering — directly applied at work to deploy a TLS-secured
-> MQTT broker in a container terminal environment.
+> Built by an automation engineer who works daily with industrial systems —
+> cranes, conveyors, PLCs — and wanted to build the data layer on top of
+> them. Knowledge from this project was directly applied to deploy a
+> TLS-secured MQTT broker in a live container terminal environment.
 
 ## Architecture
-┌──────────────┐    ┌────────┐    ┌──────────────────┐    ┌────────┐    ┌──────────────────┐    ┌──────────┐    ┌─────────┐
-│  Edge Device │───▶│  EMQX  │───▶│ MQTT-Kafka       │───▶│ Kafka  │───▶│ Kafka-Postgres   │───▶│PostgreSQL│───▶│ Grafana │
-│  (HP Laptop) │    │ Broker │    │ Bridge (Python)  │    │ Topic  │    │ Consumer (Python)│    │  + dbt   │    │Dashboard│
-└──────────────┘    └────────┘    └──────────────────┘    └────────┘    └──────────────────┘    └──────────┘    └─────────┘
-▲
-│
-┌──────────────┐
-│   Airflow    │
-│ (hourly DAG) │
-└──────────────┘
+
+```
+HP Laptop (edge)                  Main Laptop (data centre)
+────────────────                  ─────────────────────────
+
+factory_simulator
+(Supervisor / Python)
+        │
+        │ MQTT  QoS 1
+        ▼
+                                  EMQX :1883
+                                  (Docker)
+                                        │
+                                  mqtt_kafka_bridge.py
+                                  (Supervisor / Python)
+                                        │
+                                        ▼
+                                  Kafka :9092   ←── Zookeeper
+                                  (Docker)
+                                        │
+                                  kafka_to_postgres.py
+                                  (Supervisor / Python)
+                                        │
+                                        ▼
+                                  PostgreSQL :5432
+                                  public.machine_telemetry
+                                        │
+                                        │  dbt run (hourly)
+                                        │  triggered by Airflow
+                                        ▼
+                                  analytics.stg_telemetry
+                                  analytics.dim_machines
+                                  analytics.fct_hourly_performance
+                                        │
+                                        ▼
+                                  Grafana :3000
+                                  Factory OI Dashboard (4 panels)
+```
 
 ## Tech Stack
 
 | Layer | Tool | Purpose |
 |-------|------|---------|
-| Edge | Python (paho-mqtt) | Simulates 3 industrial machines |
-| Transport | EMQX | MQTT broker — receives telemetry |
-| Streaming | Apache Kafka + Zookeeper | Buffers and distributes messages |
-| Storage | PostgreSQL | Stores raw and transformed data |
-| Transformation | dbt | SQL-based analytics models |
-| Orchestration | Apache Airflow | Schedules dbt runs hourly |
-| Visualisation | Grafana | Live dashboards |
-| Process Control | Supervisor | Manages Python services |
-| Containerisation | Docker | All services |
+| Edge | Python (paho-mqtt) | Simulates 3 industrial machines publishing MQTT telemetry |
+| Transport | EMQX | MQTT broker — receives and fans out telemetry |
+| Streaming | Apache Kafka + Zookeeper | Decoupled message buffer — no data loss on downstream failure |
+| Storage | PostgreSQL 15 | Raw telemetry and analytics models |
+| Transformation | dbt | SQL models with schema tests — staging, dimensions, hourly facts |
+| Orchestration | Apache Airflow 2.9.0 | Hourly DAG: `dbt run` → `dbt test` |
+| Visualisation | Grafana | Live dashboards querying PostgreSQL directly |
+| Process Control | Supervisor | Manages Python pipeline services on both machines |
+| Containerisation | Docker | All backend services, shared `factory-network` bridge |
 
 ## Repository Structure
-iiot-oi-platform/
-├── simulator/        ← edge device — machine telemetry simulator
-├── pipeline/         ← Python scripts moving data through the streaming layer
-├── dbt/              ← analytics transformations
-├── airflow/          ← orchestration DAGs
-├── infrastructure/   ← Docker and Supervisor setup
-├── grafana/          ← exported dashboards
-├── docs/             ← architecture diagrams, project report, screenshots
-└── demo/             ← interactive web demo (GitHub Pages)
 
-Each subfolder has its own README explaining what's inside and why.
+```
+iiot-oi-platform/
+├── simulator/        ← edge device — three industrial machine simulators
+├── pipeline/         ← Python scripts: MQTT→Kafka bridge and Kafka→PostgreSQL consumer
+├── dbt/              ← analytics transformations (staging, dimension, fact models)
+├── airflow/          ← DAG definitions for hourly orchestration
+├── infrastructure/   ← Docker setup, Supervisor config, network architecture, startup procedure
+├── grafana/          ← dashboard exports and panel documentation
+├── docs/             ← architecture diagrams, project report, screenshots
+└── demo/             ← interactive showcase site (GitHub Pages)
+```
+
+Each folder has its own README explaining what's inside and how it fits the architecture.
 
 ## Quick Start
 
-This project runs across two laptops on the same network:
-- **Main laptop** — runs all services (Docker containers + Python pipelines)
-- **HP laptop** — runs the simulator (edge device)
+This system runs across two laptops. See `infrastructure/README.md` for the
+full setup, but the short version:
 
-See `infrastructure/README.md` for detailed setup instructions.
+**Main laptop** — open WSL2, Supervisor auto-starts via `~/.bashrc`:
+```bash
+sudo supervisorctl status    # docker, mqtt_kafka_bridge, kafka_to_postgres — all RUNNING
+docker ps                    # 7 containers Up
+```
+
+**HP laptop** — start the simulator:
+```bash
+sudo service supervisor start
+sudo supervisorctl status    # factory_simulator — RUNNING
+```
 
 ## What This Project Demonstrates
 
-- **End-to-end data engineering** — from raw sensor data to live analytics
-- **Production patterns** — message buffering, decoupled services, automated
-  orchestration, data quality testing
-- **Real industrial relevance** — the same architecture used in container
-  terminals, manufacturing plants, and smart factories
-- **Problem-solving** — production-level issues debugged and resolved
-  (Kafka dual-listener configuration, WSL2 networking, Airflow backend
-  migration, Docker network routing)
+**Automation domain knowledge applied to data engineering.** The architecture
+mirrors what real industrial data systems look like: MQTT at the edge, a
+message broker as the central hub, Kafka for reliable buffering, and a
+transformation layer feeding operational dashboards. It's not a tutorial
+stack — it's the same pattern used in container terminals and manufacturing
+plants.
 
-## Live Demo & Project Report
+Specific things worth pointing at:
+- **Decoupled streaming** — MQTT → Kafka → PostgreSQL means no single point
+  of failure; the simulator keeps publishing if the database goes down
+- **Automated orchestration** — Airflow runs `dbt run` then `dbt test` hourly,
+  and stops propagation to dashboards if data quality tests fail
+- **Production debugging** — Kafka dual-listener configuration, WSL2 networking
+  constraints, Airflow SQLite locking on WSL2, Docker container DNS resolution
+  — real problems found and fixed
 
-Visit the [project showcase](https://arcotkaran.github.io/iiot-oi-platform/)
-for an interactive walkthrough and the full project report.
+## Live Demo
+
+[arcotkaran.github.io/iiot-oi-platform](https://arcotkaran.github.io/iiot-oi-platform/) —
+interactive walkthrough with animated pipeline simulation.
 
 ## Author
 
-**Karan Arcot** — Automation Engineer specialising in Industrial Operational Intelligence and data engineering.
+**Karan Arcot** — Automation Engineer at Kalmar (Cargotec), specialising in
+Industrial Operational Intelligence and data engineering.
 
-[LinkedIn](https://www.linkedin.com/in/karanarcot/)
-[GitHub](https://github.com/arcotkaran)
+[LinkedIn](https://www.linkedin.com/in/karanarcot/) · [GitHub](https://github.com/arcotkaran)
 
 ## License
 
-MIT — see `LICENSE` file for details.
+MIT — see `LICENSE` for details.
