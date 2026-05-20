@@ -1,0 +1,13 @@
+{
+  "name": "iiot-oi-platform-screenshots",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Screenshot capture utilities for the IIoT OI Platform demo site and Grafana dashboard.",
+  "scripts": {
+    "screenshots:demo": "node scripts/capture_demo_screenshots.js",
+    "screenshots:grafana": "node scripts/capture_grafana_screenshot.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}

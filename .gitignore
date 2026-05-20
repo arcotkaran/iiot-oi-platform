@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Node / Playwright
+node_modules/
+package-lock.json
+.cache/ms-playwright/
+playwright-report/
+.playwright/
