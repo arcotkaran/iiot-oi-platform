@@ -97,12 +97,15 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${AIRFLOW_DB_PASSWORD}@postgres/airflow_db
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
     ports:
       - "8080:8080"
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./dbt/factory_analytics:/opt/airflow/dbt
       - ./dbt/profiles.yml:/opt/airflow/.dbt/profiles.yml:ro
+      - ./analyzer:/opt/airflow/analyzer:ro
 
   mqtt_kafka_bridge:
     build: ./pipeline
@@ -133,3 +136,18 @@ services:
     depends_on: [emqx]
     environment:
       MQTT_BROKER: emqx
+      SCENARIOS_ENABLED: ${SCENARIOS_ENABLED:-true}
+      SCENARIO_SPEED: ${SCENARIO_SPEED:-1}
+      SCENARIO_GAP_MIN: ${SCENARIO_GAP_MIN:-60}
+      SCENARIO_GAP_MAX: ${SCENARIO_GAP_MAX:-120}
+      SCENARIO_FORCE: ${SCENARIO_FORCE:-}
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    environment:
+      OLLAMA_KEEP_ALIVE: 5m
+    volumes:
+      - ./data/ollama:/root/.ollama
