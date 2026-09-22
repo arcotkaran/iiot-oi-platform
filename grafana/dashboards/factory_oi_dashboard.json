@@ -542,6 +542,322 @@
       ],
       "title": "Hourly Average Temperature (dbt)",
       "type": "timeseries"
+    },
+    {
+      "title": "CNC Spindle Vibration (mm/s)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "lineWidth": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 2.5
+              },
+              {
+                "color": "red",
+                "value": 3.5
+              }
+            ]
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aflatmxdxjq4gc"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT received_at AS time, vibration_mms AS \"vibration\"\nFROM machine_telemetry\nWHERE machine_id = 'cnc_mill' AND status = 'running'\n  AND $__timeFilter(received_at)\nORDER BY 1"
+        }
+      ],
+      "id": 5,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aflatmxdxjq4gc"
+      }
+    },
+    {
+      "title": "Conveyor Motor Load (%)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "lineWidth": 2
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aflatmxdxjq4gc"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT received_at AS time, motor_load_pct AS \"motor load\"\nFROM machine_telemetry\nWHERE machine_id = 'conveyor' AND status = 'running'\n  AND $__timeFilter(received_at)\nORDER BY 1"
+        }
+      ],
+      "id": 6,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aflatmxdxjq4gc"
+      }
+    },
+    {
+      "title": "AI Fault Findings (local LLM)",
+      "type": "table",
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Severity"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "high": {
+                        "color": "red",
+                        "index": 0
+                      },
+                      "medium": {
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "low": {
+                        "color": "yellow",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 130
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "ACTIVE": {
+                        "color": "red",
+                        "index": 0
+                      },
+                      "watch": {
+                        "color": "blue",
+                        "index": 1
+                      },
+                      "self-cleared": {
+                        "color": "green",
+                        "index": 2
+                      },
+                      "cleared after stop": {
+                        "color": "green",
+                        "index": 3
+                      },
+                      "cleared": {
+                        "color": "text",
+                        "index": 4
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "AI confidence"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aflatmxdxjq4gc"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT\n  CASE WHEN status = 'active' AND last_seen > NOW()::timestamp - INTERVAL '15 minutes' THEN 'ACTIVE'\n       WHEN status = 'active' THEN 'cleared'\n       ELSE status END AS \"Status\",\n  last_seen AS \"Last seen\",\n  machine_id AS \"Machine\",\n  finding_type AS \"Issue\",\n  rule_severity AS \"Severity\",\n  summary AS \"What was detected\",\n  COALESCE(ai_likely_cause, '(AI unavailable)') AS \"Likely cause (AI)\",\n  ai_confidence AS \"AI confidence\",\n  ai_what_to_check AS \"What to check (AI)\",\n  occurrences AS \"Runs seen\"\nFROM fault_findings\nWHERE last_seen > NOW()::timestamp - INTERVAL '24 hours'\nORDER BY (status = 'active' AND last_seen > NOW()::timestamp - INTERVAL '15 minutes') DESC, last_seen DESC\nLIMIT 30"
+        }
+      ],
+      "id": 7,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aflatmxdxjq4gc"
+      }
+    },
+    {
+      "id": 8,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aflatmxdxjq4gc"
+      },
+      "title": "Hydraulic Press Oil Temperature (C)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "custom": {
+            "lineWidth": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 58
+              },
+              {
+                "color": "red",
+                "value": 75
+              }
+            ]
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aflatmxdxjq4gc"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT received_at AS time, oil_temp_c AS \"oil temperature\"\nFROM machine_telemetry\nWHERE machine_id = 'hydraulic_press' AND status = 'running'\n  AND $__timeFilter(received_at)\nORDER BY 1"
+        }
+      ]
     }
   ],
   "preload": false,
@@ -568,5 +884,5 @@
   "timezone": "browser",
   "title": "Factory OI Dashboard",
   "uid": "adkpn7r",
-  "version": 9
+  "version": 11
 }
