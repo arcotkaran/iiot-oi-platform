@@ -1,0 +1,19 @@
+# This file is generated. Do not edit.
+# The configs are results of online config changes from UI/API/CLI.
+# To persist configs in this file, copy the content to etc/base.hocon.
+authentication = [
+  {
+    backend = built_in_database
+    bootstrap_file = "${EMQX_ETC_DIR}/auth-built-in-db-bootstrap.csv"
+    bootstrap_type = plain
+    enable = false
+    mechanism = password_based
+    password_hash_algorithm {name = sha256, salt_position = suffix}
+    precondition = ""
+    user_id_type = username
+  }
+]
+log {
+  console {}
+  file {}
+}

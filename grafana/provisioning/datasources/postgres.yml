@@ -1,0 +1,19 @@
+apiVersion: 1
+datasources:
+  - name: grafana-postgresql-datasource
+    uid: aflatmxdxjq4gc          # must match the UID the dashboard panels reference
+    type: grafana-postgresql-datasource
+    access: proxy
+    url: postgres:5432
+    user: ${POSTGRES_USER}
+    isDefault: true
+    jsonData:
+      database: ${POSTGRES_DB}
+      sslmode: disable
+      postgresVersion: 1500
+      maxOpenConns: 100
+      maxIdleConns: 100
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}

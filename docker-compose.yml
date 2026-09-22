@@ -1,0 +1,135 @@
+# IIoT Operational Intelligence Platform - single-machine stack
+# Standard host ports (cutover complete).
+name: iiot-master
+
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      AIRFLOW_DB_PASSWORD: ${AIRFLOW_DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./postgres/init/00_create_airflow_db.sh:/docker-entrypoint-initdb.d/00_create_airflow_db.sh:ro
+      - ./postgres/init/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./postgres/seed/02_recent_data.sql:/docker-entrypoint-initdb.d/02_recent_data.sql:ro
+      - ./postgres/init/03_fix_sequences.sql:/docker-entrypoint-initdb.d/03_fix_sequences.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - ./data/zookeeper/data:/var/lib/zookeeper/data
+      - ./data/zookeeper/log:/var/lib/zookeeper/log
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    restart: unless-stopped
+    depends_on: [zookeeper]
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT_INTERNAL://0.0.0.0:29092,PLAINTEXT_EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_INTERNAL://kafka:29092,PLAINTEXT_EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT_INTERNAL:PLAINTEXT,PLAINTEXT_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    volumes:
+      - ./data/kafka:/var/lib/kafka/data
+
+  emqx:
+    image: emqx/emqx:latest
+    restart: unless-stopped
+    environment:
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_DASHBOARD_PASSWORD}
+    ports:
+      - "1883:1883"
+      - "18083:18083"
+    volumes:
+      - ./data/emqx:/opt/emqx/data
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    user: "${HOST_UID}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+
+  airflow:
+    build: ./airflow
+    restart: unless-stopped
+    user: "${HOST_UID}:0"
+    command: standalone
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${AIRFLOW_DB_PASSWORD}@postgres/airflow_db
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./dbt/factory_analytics:/opt/airflow/dbt
+      - ./dbt/profiles.yml:/opt/airflow/.dbt/profiles.yml:ro
+
+  mqtt_kafka_bridge:
+    build: ./pipeline
+    restart: unless-stopped
+    command: ["python", "-u", "mqtt_kafka_bridge.py"]
+    depends_on: [emqx, kafka]
+    environment:
+      MQTT_BROKER: emqx
+      KAFKA_BROKER: kafka:29092
+
+  kafka_to_postgres:
+    build: ./pipeline
+    restart: unless-stopped
+    command: ["python", "-u", "kafka_to_postgres.py"]
+    depends_on:
+      kafka:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER: kafka:29092
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  simulator:
+    build: ./simulator
+    restart: unless-stopped
+    depends_on: [emqx]
+    environment:
+      MQTT_BROKER: emqx

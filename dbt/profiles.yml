@@ -1,0 +1,12 @@
+factory_analytics:
+  outputs:
+    dev:
+      dbname: factory_db
+      host: postgres
+      pass: "{{ env_var('POSTGRES_PASSWORD') }}"
+      port: 5432
+      schema: analytics
+      threads: 1
+      type: postgres
+      user: factory
+  target: dev

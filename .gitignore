@@ -223,3 +223,8 @@ package-lock.json
 .cache/ms-playwright/
 playwright-report/
 .playwright/
+
+# --- consolidated stack ---
+data/
+docs/internal/
+dbt/factory_analytics/logs/

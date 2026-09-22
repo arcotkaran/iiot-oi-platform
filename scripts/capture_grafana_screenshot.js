@@ -14,7 +14,7 @@ const OUT_FILE = path.join(OUT_DIR, '05_grafana.png');
 
 const GRAFANA = process.env.GRAFANA_URL || 'http://localhost:3000';
 const USER = process.env.GRAFANA_USER || 'admin';
-const PASS = process.env.GRAFANA_PASS || 'Yash1313';
+const PASS = process.env.GRAFANA_PASS || '';
 const DASHBOARD_UID = process.env.GRAFANA_DASH_UID || 'adkpn7r';
 const DASHBOARD_SLUG = 'factory-oi-dashboard';
 

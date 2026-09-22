@@ -1,3 +1,4 @@
+import os
 import paho.mqtt.client as mqtt
 from kafka import KafkaProducer
 import json
@@ -6,9 +7,9 @@ import time
 # ============================================================
 # CONFIGURATION
 # ============================================================
-MQTT_BROKER = "localhost"
+MQTT_BROKER = os.environ.get("MQTT_BROKER", "localhost")
 MQTT_PORT = 1883
-KAFKA_BROKER = "localhost:9092"
+KAFKA_BROKER = os.environ.get("KAFKA_BROKER", "localhost:9092")
 KAFKA_TOPIC = "machine-telemetry"
 
 # ============================================================
@@ -16,7 +17,7 @@ KAFKA_TOPIC = "machine-telemetry"
 # ============================================================
 print("Connecting to Kafka...")
 producer = KafkaProducer(
-    bootstrap_servers='localhost:9092',
+    bootstrap_servers=KAFKA_BROKER,
     value_serializer=lambda v: json.dumps(v).encode('utf-8'),
     api_version=(2, 5, 0),
     request_timeout_ms=30000,

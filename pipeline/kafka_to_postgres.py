@@ -1,3 +1,4 @@
+import os
 import json
 import psycopg2
 from kafka import KafkaConsumer
@@ -5,16 +6,16 @@ from kafka import KafkaConsumer
 # ============================================================
 # CONFIGURATION
 # ============================================================
-KAFKA_BROKER = "localhost:9092"
+KAFKA_BROKER = os.environ.get("KAFKA_BROKER", "localhost:9092")
 KAFKA_TOPIC = "machine-telemetry"
 KAFKA_GROUP = "postgres-consumer"
 
 DB_CONFIG = {
-    "host": "localhost",
+    "host": os.environ.get("POSTGRES_HOST", "localhost"),
     "port": 5432,
     "database": "factory_db",
     "user": "factory",
-    "password": "factory123"
+    "password": os.environ.get("POSTGRES_PASSWORD", "")
 }
 
 # ============================================================

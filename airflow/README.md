@@ -38,7 +38,7 @@ docker run -d \
   --restart always \
   -p 8080:8080 \
   -e AIRFLOW__CORE__EXECUTOR=LocalExecutor \
-  -e AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow123@postgres/airflow_db \
+  -e AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:<AIRFLOW_DB_PASSWORD>@postgres/airflow_db \
   -e AIRFLOW__CORE__LOAD_EXAMPLES=False \
   -v ~/airflow/dags:/opt/airflow/dags \
   -v ~/factory_analytics:/opt/airflow/dbt \
