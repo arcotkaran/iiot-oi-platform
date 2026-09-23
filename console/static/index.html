@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Factory Operations Console</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --line: #e6e8ec;
+    --ink: #10151f;
+    --muted: #6b7382;
+    --faint: #9aa1ae;
+    --indigo: #4f46e5;
+    --teal: #0d9488;
+    --amber: #d97706;
+    --red: #dc2626;
+    --green: #16a34a;
+    --blue: #2563eb;
+    --shadow: 0 1px 2px rgba(16,21,31,.05), 0 6px 16px -8px rgba(16,21,31,.12);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 28px 64px; }
+
+  header {
+    position: sticky; top: 0; z-index: 10; background: rgba(245,246,248,.88);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); margin-bottom: 28px;
+  }
+  .bar { max-width: 1240px; margin: 0 auto; padding: 18px 28px; display: flex; align-items: center; gap: 18px; }
+  .brand h1 { margin: 0; font-size: 19px; font-weight: 640; letter-spacing: -.01em; }
+  .brand p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+  .spacer { flex: 1; }
+  .live { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(22,163,74,.14); }
+  .dot.stale { background: var(--amber); box-shadow: 0 0 0 4px rgba(217,119,6,.14); }
+  .range { display: flex; background: #eceef2; border-radius: 10px; padding: 3px; }
+  .range button {
+    border: 0; background: none; font: inherit; font-size: 13px; color: var(--muted);
+    padding: 5px 12px; border-radius: 8px; cursor: pointer;
+  }
+  .range button[aria-pressed="true"] { background: var(--card); color: var(--ink); font-weight: 560; box-shadow: var(--shadow); }
+
+  h2.section {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .09em; color: var(--faint);
+    font-weight: 620; margin: 34px 0 14px;
+  }
+  .grid { display: grid; gap: 16px; }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g2 { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 1000px) { .g4, .g3, .g2 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px)  { .g4, .g3, .g2 { grid-template-columns: 1fr; } .wrap, .bar { padding-left: 16px; padding-right: 16px; } }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+  .stat { padding: 18px 20px; }
+  .stat .k { font-size: 12.5px; color: var(--muted); font-weight: 520; }
+  .stat .v { font-size: 34px; font-weight: 660; letter-spacing: -.02em; margin-top: 6px; line-height: 1.1; }
+  .stat .s { font-size: 12.5px; color: var(--faint); margin-top: 2px; }
+  .v.warn { color: var(--amber); } .v.bad { color: var(--red); } .v.good { color: var(--green); }
+
+  .machine { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .machine .top { display: flex; align-items: center; gap: 10px; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .machine h3 { margin: 0; font-size: 15.5px; font-weight: 600; }
+  .pill {
+    font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+    letter-spacing: .02em; white-space: nowrap;
+  }
+  .pill.running { background: #e8f6ee; color: #15803d; }
+  .pill.stopped { background: #fdf0e3; color: #b45309; }
+  .pill.offline { background: #f1f2f5; color: var(--muted); }
+  .readings { display: flex; gap: 22px; flex-wrap: wrap; }
+  .readings div span { display: block; font-size: 12px; color: var(--muted); }
+  .readings div b { font-size: 20px; font-weight: 620; letter-spacing: -.01em; }
+  .readings div b i { font-style: normal; font-size: 12.5px; color: var(--faint); font-weight: 500; margin-left: 2px; }
+  .machine .foot { font-size: 12px; color: var(--faint); }
+
+  .finding { display: flex; overflow: hidden; }
+  .stripe { width: 4px; flex: none; }
+  .finding .body { padding: 16px 20px; flex: 1; min-width: 0; }
+  .fhead { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 8px; }
+  .fhead .machine-name { font-weight: 620; }
+  .fhead .issue { color: var(--muted); }
+  .fhead .when { margin-left: auto; font-size: 12.5px; color: var(--faint); white-space: nowrap; }
+  .chip { font-size: 11.5px; font-weight: 600; padding: 2.5px 9px; border-radius: 999px; }
+  .chip.high { background: #fdeaea; color: var(--red); }
+  .chip.medium { background: #fdf3e3; color: #b45309; }
+  .chip.low { background: #eef0f4; color: var(--muted); }
+  .chip.ACTIVE { background: #fdeaea; color: var(--red); }
+  .chip.watch { background: #e9effe; color: var(--blue); }
+  .chip.cleared { background: #e8f6ee; color: var(--green); }
+  .chip.done { background: #f1f2f5; color: var(--muted); }
+  .detected { margin: 0; color: #2a3140; }
+  .ai {
+    margin-top: 13px; background: #fafbfc; border: 1px solid var(--line);
+    border-radius: 11px; padding: 13px 15px;
+  }
+  .ai .label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); font-weight: 620; }
+  .ai .cause { margin: 5px 0 0; font-weight: 560; }
+  .ai ul { margin: 10px 0 0; padding-left: 18px; color: #3b4252; }
+  .ai li { margin: 3px 0; }
+  .ai summary { cursor: pointer; font-size: 13px; color: var(--muted); margin-top: 9px; }
+  .ai summary::marker { color: var(--faint); }
+
+  .chart { padding: 16px 18px 10px; }
+  .chart .chead { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .chart h3 { margin: 0; font-size: 14.5px; font-weight: 600; }
+  .chart .sub { font-size: 12.5px; color: var(--faint); }
+  .chart .now { margin-left: auto; font-size: 19px; font-weight: 640; letter-spacing: -.01em; }
+  .chart svg { width: 100%; height: auto; display: block; }
+  .axis { fill: var(--faint); font-size: 10.5px; }
+  .gridline { stroke: #eef0f3; stroke-width: 1; }
+
+  .filters { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+  .fgroup { display: flex; align-items: center; gap: 7px; }
+  .fgroup > span { font-size: 12px; color: var(--faint); font-weight: 560; }
+  .fgroup button {
+    border: 1px solid var(--line); background: var(--card); font: inherit; font-size: 12.5px;
+    color: var(--muted); padding: 4px 11px; border-radius: 999px; cursor: pointer;
+  }
+  .fgroup button:hover { border-color: #d6dae1; }
+  .fgroup button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 560; }
+  .fgroup button .n { opacity: .55; margin-left: 5px; font-variant-numeric: tabular-nums; }
+  .fcount { margin-left: auto; font-size: 12.5px; color: var(--faint); }
+
+  .empty { padding: 30px; text-align: center; color: var(--faint); }
+  footer { margin-top: 40px; font-size: 12.5px; color: var(--faint); text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <h1>Factory Operations Console</h1>
+      <p>Live telemetry, rule-based detection and local-AI explanations</p>
+    </div>
+    <div class="spacer"></div>
+    <div class="range" id="range">
+      <button data-h="1">1h</button>
+      <button data-h="6" aria-pressed="true">6h</button>
+      <button data-h="24">24h</button>
+    </div>
+    <div class="live"><span class="dot" id="dot"></span><span id="updated">connecting…</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="grid g4" id="stats"></div>
+
+  <h2 class="section">Machines</h2>
+  <div class="grid g3" id="machines"></div>
+
+  <h2 class="section">Fault findings <span style="text-transform:none;letter-spacing:0;color:var(--faint);font-weight:500">— detected by rules, explained by a local model</span></h2>
+  <div class="filters" id="filters"></div>
+  <div class="grid" id="findings" style="gap:12px"></div>
+
+  <h2 class="section">Condition monitoring</h2>
+  <div class="grid g2" id="charts"></div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const ACCENT = { indigo: "#4f46e5", teal: "#0d9488", amber: "#d97706" };
+const machineLabels = {};
+const filters_el = document.getElementById("filters");
+let hours = 6, timer = null;
+
+const time = s => s ? new Date(s).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}) : "—";
+const num = n => n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, "") + "k" : String(n);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function statusChip(status) {
+  if (status === "ACTIVE") return ["ACTIVE", "ACTIVE"];
+  if (status === "watch") return ["watch", "watch"];
+  if (status === "self-cleared") return ["cleared", "self-cleared"];
+  if (status === "cleared after stop") return ["cleared", "cleared after stop"];
+  return ["done", status];
+}
+
+function renderStats(h) {
+  const cards = [
+    {k: "Machines reporting", v: `${h.reporting}/3`, s: "in the last 2 minutes",
+     cls: h.reporting === 3 ? "good" : "bad"},
+    {k: "Open findings", v: h.open_findings, s: "needing attention now",
+     cls: h.open_findings === 0 ? "good" : (h.open_findings > 3 ? "bad" : "warn")},
+    {k: "Findings, last 24 h", v: h.findings_24h, s: `${h.closed_24h} closed automatically`},
+    {k: "Readings, last 24 h", v: num(h.readings_24h), s: "≈3 per second"},
+  ];
+  stats.innerHTML = cards.map(c => `<div class="card stat">
+      <div class="k">${c.k}</div>
+      <div class="v ${c.cls || ""}">${c.v}</div>
+      <div class="s">${c.s}</div></div>`).join("");
+}
+
+function renderMachines(list) {
+  machines.innerHTML = list.map(m => `<div class="card machine">
+      <div class="top">
+        <span class="swatch" style="background:${ACCENT[m.accent]}"></span>
+        <h3>${esc(m.label)}</h3>
+        <span class="pill ${m.status}">${m.status}${m.fault ? " · " + esc(m.fault) : ""}</span>
+      </div>
+      <div class="readings">${m.readings.map(r =>
+        `<div><span>${esc(r.label)}</span><b>${r.value}<i>${esc(r.unit)}</i></b></div>`).join("")}</div>
+      <div class="foot">last reading ${time(m.last_seen)}</div>
+    </div>`).join("");
+}
+
+const filters = { status: "all", machine: "all", severity: "all" };
+let allFindings = [];
+
+const bucketOf = f => f.status === "active"
+  ? (new Date(f.last_seen) > Date.now() - 15 * 60000 ? "active" : "cleared")
+  : (f.status === "watch" ? "watch" : "cleared");
+
+function matches(f) {
+  return (filters.status === "all" || bucketOf(f) === filters.status)
+      && (filters.machine === "all" || f.machine_id === filters.machine)
+      && (filters.severity === "all" || f.rule_severity === filters.severity);
+}
+
+function renderFilters() {
+  const count = (key, val) => allFindings.filter(f => {
+    const saved = filters[key]; filters[key] = val;
+    const ok = matches(f); filters[key] = saved; return ok;
+  }).length;
+  const group = (key, label, options) => `<div class="fgroup" data-key="${key}"><span>${label}</span>` +
+    options.map(([val, text]) => `<button data-val="${val}" aria-pressed="${filters[key] === val}">
+        ${text}<span class="n">${count(key, val)}</span></button>`).join("") + `</div>`;
+
+  const machineOptions = [["all", "All"]].concat(
+    [...new Set(allFindings.map(f => f.machine_id))].map(m => [m, machineLabels[m] || m]));
+  filters_el.innerHTML =
+    group("status", "Status", [["all", "All"], ["active", "Active"], ["watch", "Watch"], ["cleared", "Cleared"]]) +
+    group("machine", "Machine", machineOptions) +
+    group("severity", "Severity", [["all", "All"], ["high", "High"], ["medium", "Medium"], ["low", "Low"]]) +
+    `<span class="fcount">${allFindings.filter(matches).length} of ${allFindings.length} shown</span>`;
+}
+
+filters_el.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  filters[b.closest(".fgroup").dataset.key] = b.dataset.val;
+  renderFilters(); renderFindings(allFindings.filter(matches));
+});
+
+// The stored summaries use raw machine ids and UTC times; show them the way the rest of the page does.
+function prettify(text, anchorISO) {
+  let out = text.replace(/\b(cnc_mill|conveyor|hydraulic_press)\b/g, m => machineLabels[m] || m);
+  return out.replace(/\b(\d{2}):(\d{2})(?::(\d{2}))? UTC\b/g, (_, hh, mm) => {
+    const anchor = new Date(anchorISO);
+    const d = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), anchor.getUTCDate(), +hh, +mm));
+    if (d - anchor > 3600e3) d.setUTCDate(d.getUTCDate() - 1);   // the time belongs to the previous day
+    return time(d.toISOString());
+  });
+}
+
+function renderFindings(list) {
+  if (!list.length) {
+    findings.innerHTML = `<div class="card empty">Nothing matches these filters.</div>`;
+    return;
+  }
+  findings.innerHTML = list.map(f => {
+    const [cls, text] = statusChip(f.status === "active" ? "ACTIVE" : f.status);
+    const stripe = cls === "ACTIVE" ? "var(--red)" : cls === "watch" ? "var(--blue)"
+                 : cls === "cleared" ? "var(--green)" : "var(--line)";
+    const ai = f.ai_likely_cause
+      ? `<div class="ai">
+           <div class="label">Local model · ${esc(f.ai_model || "")}${f.ai_confidence ? " · " + esc(f.ai_confidence) + " confidence" : ""}</div>
+           <p class="cause">${esc(f.ai_likely_cause)}</p>
+           ${f.checks.length ? `<details><summary>What to check (${f.checks.length})</summary>
+              <ul>${f.checks.map(c => `<li>${esc(c)}</li>`).join("")}</ul></details>` : ""}
+         </div>`
+      : `<div class="ai"><div class="label">Local model</div><p class="cause" style="color:var(--faint);font-weight:400">
+           No explanation stored${f.ai_error ? " — " + esc(f.ai_error) : ""}.</p></div>`;
+    return `<div class="card finding">
+        <div class="stripe" style="background:${stripe}"></div>
+        <div class="body">
+          <div class="fhead">
+            <span class="machine-name">${esc(f.machine_label || f.machine_id)}</span>
+            <span class="issue">${esc(f.issue)}</span>
+            <span class="chip ${esc(f.rule_severity)}">${esc(f.rule_severity)}</span>
+            <span class="chip ${cls}">${esc(text)}</span>
+            <span class="when">${time(f.first_seen)} → ${time(f.last_seen)} · seen ${f.occurrences}×</span>
+          </div>
+          <p class="detected">${esc(prettify(f.summary, f.last_seen))}</p>
+          ${ai}
+        </div></div>`;
+  }).join("");
+}
+
+function chartSVG(t) {
+  const W = 620, H = 170, L = 44, R = 12, T = 12, B = 22;
+  if (t.points.length < 2) return `<svg viewBox="0 0 ${W} ${H}"><text class="axis" x="${W/2}" y="${H/2}" text-anchor="middle">not enough data yet</text></svg>`;
+  const vs = t.points.map(p => p.v), ts = t.points.map(p => +new Date(p.t));
+  let lo = Math.min(...vs, t.normal), hi = Math.max(...vs, t.warn);
+  const pad = (hi - lo) * 0.18 || 1; lo -= pad; hi += pad;
+  const x = v => L + (v - ts[0]) / ((ts[ts.length-1] - ts[0]) || 1) * (W - L - R);
+  const y = v => T + (1 - (v - lo) / ((hi - lo) || 1)) * (H - T - B);
+  const path = t.points.map((p, i) => `${i ? "L" : "M"}${x(+new Date(p.t)).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
+  const area = `${path}L${x(ts[ts.length-1]).toFixed(1)},${y(lo)}L${x(ts[0]).toFixed(1)},${y(lo)}Z`;
+  const c = ACCENT[t.accent];
+  const last = t.points[t.points.length - 1];
+  const ticks = [lo + (hi - lo) * 0.15, (lo + hi) / 2, hi - (hi - lo) * 0.15];
+  const dec = (hi - lo) < 5 ? 1 : 0;
+  return `<svg viewBox="0 0 ${W} ${H}">
+    <defs><linearGradient id="g-${t.key}" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="${c}" stop-opacity=".18"/><stop offset="100%" stop-color="${c}" stop-opacity="0"/>
+    </linearGradient></defs>
+    ${ticks.map(v => `<line class="gridline" x1="${L}" x2="${W-R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/>
+       <text class="axis" x="${L-8}" y="${(y(v)+3.5).toFixed(1)}" text-anchor="end">${v.toFixed(dec)}</text>`).join("")}
+    ${t.warn <= hi && t.warn >= lo ? `<line x1="${L}" x2="${W-R}" y1="${y(t.warn).toFixed(1)}" y2="${y(t.warn).toFixed(1)}"
+        stroke="${"#e11d48"}" stroke-opacity=".45" stroke-width="1" stroke-dasharray="4 4"/>
+      <text class="axis" x="${W-R}" y="${(y(t.warn)-5).toFixed(1)}" text-anchor="end" fill="#e11d48" opacity=".75">warning ${t.warn}</text>` : ""}
+    <path d="${area}" fill="url(#g-${t.key})"/>
+    <path d="${path}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${x(+new Date(last.t)).toFixed(1)}" cy="${y(last.v).toFixed(1)}" r="3.5" fill="${c}"/>
+    <text class="axis" x="${L}" y="${H-6}">${time(t.points[0].t)}</text>
+    <text class="axis" x="${W-R}" y="${H-6}" text-anchor="end">${time(last.t)}</text>
+  </svg>`;
+}
+
+function renderCharts(trends) {
+  charts.innerHTML = trends.map(t => {
+    const last = t.points.length ? t.points[t.points.length - 1].v : null;
+    const hot = last !== null && last >= t.warn;
+    const shown = last === null ? "—" : last.toFixed(t.unit === "mm/s" ? 2 : 1) + " " + t.unit;
+    return `<div class="card chart">
+      <div class="chead">
+        <h3>${esc(t.label)}</h3><span class="sub">${esc(t.machine)} · normal ~${t.normal} ${esc(t.unit)}</span>
+        <span class="now" style="color:${hot ? "var(--red)" : "inherit"}">${shown}</span>
+      </div>${chartSVG(t)}</div>`;
+  }).join("");
+}
+
+async function load() {
+  try {
+    const res = await fetch(`/api/state?hours=${hours}`);
+    const s = await res.json();
+    renderStats(s.headline); renderMachines(s.machines);
+    s.machines.forEach(m => { machineLabels[m.id] = m.label; });
+    allFindings = s.findings;
+    renderFilters(); renderFindings(allFindings.filter(matches));
+    renderCharts(s.trends);
+    const stale = s.headline.reporting < 3;
+    dot.className = "dot" + (stale ? " stale" : "");
+    updated.textContent = "updated " + time(s.generated_at);
+    foot.textContent = `Python → MQTT → Kafka → PostgreSQL → dbt → Airflow, with a local model in Ollama. Showing the last ${hours} hour${hours === 1 ? "" : "s"}.`;
+  } catch (e) {
+    dot.className = "dot stale";
+    updated.textContent = "connection lost — retrying";
+  }
+}
+
+range.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  hours = Number(b.dataset.h);
+  [...range.children].forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  load();
+});
+
+load();
+timer = setInterval(load, 15000);
+</script>
+</body>
+</html>
